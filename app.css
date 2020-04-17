@@ -1,0 +1,136 @@
+body {
+	margin: 0px;
+}
+#app {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	background-color: darkgrey;
+}
+
+div[draggable] {
+    cursor: pointer;
+}
+
+#left, #right {
+	height: 100vh;
+	width: calc(50vw - 3px);
+	background-color: white;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+#left {
+	justify-content: space-around;
+}
+
+#right {
+	justify-content: flex-start;
+	height: 100vh;
+}
+#categories {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	overflow-y: auto;
+	height: calc(100vh - 100px);
+	width: calc(50vw - 3px);
+}
+#footer {
+	height: 100px;
+	width: calc(50vw - 3px);
+	display: inline-flex;
+	justify-content: center;
+}
+#generate {
+	background-color: #5ccc34;
+	border-radius: 10px;
+	font-size: 50px;
+	font-weight: bold;
+	color: white;
+	width: calc(25vw - 3px);
+	height: 100px;
+	cursor: pointer;
+	display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#listToSort {
+	width: calc(49vw - 3px);
+	height: calc(50vh - 3px);
+	background-color: darkgrey;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow-y: auto;
+}
+#iframe {
+	height: calc(50vh - 3px);
+	width: calc(49vw - 3px);
+}
+iframe {
+	border: 0px;
+	height: calc(50vh - 3px);
+	width: calc(49vw - 3px);
+}
+
+.tosort {
+	width: calc(48vw - 3px);
+	height: 20px;
+    background-color: white;
+    margin-top: 2px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.category, .scategory, .sscategory {
+	background-color: grey;
+	width: calc(49vw - 3px);
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	margin-top: 2px;
+	padding-bottom: 2px;
+}
+.scategory {
+	width: calc(48vw - 3px);
+}
+.sscategory {
+	width: calc(47vw - 3px);
+}
+.categoryName, .scategoryName, .sscategoryName {
+	width: calc(48vw - 3px);
+	background-color: white;
+	font-weight: bold;
+	margin-top: 2px;
+    border-radius: 10px;
+}
+.scategoryName {
+	width: calc(46vw - 3px);
+}
+.sscategoryName {
+	width: calc(44vw - 3px);
+}
+.categoryListItem, .scategoryListItem, .sscategoryListItem {
+	margin-top: 2px;
+	width: calc(48vw - 3px);
+	background-color: darkgrey;
+    border-radius: 10px;
+}
+.scategoryListItem {
+	width: calc(46vw - 3px);
+}
+.sscategoryListItem {
+	width: calc(44vw - 3px);
+}
+
+.buttons {
+    position: relative;
+    margin-left: calc(46vw - 60px);
+    margin-top: -19px;
+    width: 75px;
+}

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Tri recettes</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
+	<link rel="stylesheet" type="text/css" href="app.css" />
+</head>
+<body>
+	<div id="app">
+		<div id="left">
+			<div id="listToSort" droppable ondragover="event.preventDefault()" @drop="handleLeftdrop">
+				<tosort
+					draggable
+					v-for="(tosort, i) in this.tosorts"
+					:title="tosort.url"
+					:tosort="tosort"
+					@click="handleClick(tosort)"
+					@delete="handleDelete(i)">
+				</tosort>
+			</div>
+			<div id="iframe">
+				<iframe v-if="clickedTosort" :src="iframeUrl"></iframe>
+			</div>
+		</div>
+		<div id="right">
+			<div id="categories">
+				<category v-for="(category, ci) in categories" :category="category" :ci="ci" @drop="handleDrop"></category>
+			</div>
+			<div id="footer">
+				<div id="generate" v-on:click="generate">GENERER</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script type="text/javascript" src="./liens.json"></script>
+<script>
+
+Vue.component('tosort', {
+	props: ['tosort'],
+	data() {
+		return {
+			mod: false
+		}
+	},
+	template: `<div class="tosort" v-on:click="handleClick" v-on:drag="handleDrag">
+		<span v-if="!mod">{{tosort.text}}</span><input v-else v-model="tosort.text">
+		<div class="buttons">
+			<span v-on:click="$emit('delete') && $event.stopPropagation()">❌</span>
+			<span v-on:click="modify() && $event.stopPropagation()">✎</span>
+			<span v-on:click="gotoUrl() && $event.stopPropagation()">⬈</span>
+		</div>
+	</div>`,
+	methods: {
+		handleClick(e) {
+			this.$emit('click', e);
+		},
+		handleDrag() {
+			dragged = {
+				target: this.tosort,
+				from: 'tosort'
+			};
+		},
+		gotoUrl() {
+			window.open(this.tosort.url);
+		},
+		modify() {
+			this.mod = !this.mod;
+		}
+	}
+});
+
+Vue.component('category', {
+	props: ['category', 'ci'],
+	template: `<div class="category" droppable ondragover="event.preventDefault()" v-on:drop="handleDrop(ci, null, null, $event)">
+		<div class="categoryName">{{category.name}}</div>
+		<div draggable class="categoryListItem" v-for="(item, i) in category.list" @drag="handleDrag(ci, null, null, i, $event)">{{item.text}}</div>
+		<div v-if="category.scategories" class="scategory" v-for="(scategory, sci) in category.scategories" v-on:drop="handleDrop(ci, sci, null, $event)">
+			<div class="scategoryName">{{scategory.name}}</div>
+			<div draggable class="scategoryListItem" v-for="(sitem, si) in scategory.list" @drag="handleDrag(ci, sci, null, si, $event)">{{sitem.text}}</div>
+			<div class="sscategory" v-if="scategory.sscategories" v-for="(sscategory, ssci) in scategory.sscategories" v-on:drop="handleDrop(ci, sci, ssci, $event)">
+				<div class="sscategoryName">{{sscategory.name}}</div>
+				<div draggable class="sscategoryListItem" v-for="(ssitem, ssi) in sscategory.list" @drag="handleDrag(ci, sci, ssci, ssi, $event)">{{ssitem.text}}</div>
+			</div>
+		</div>
+	</div>`,
+	methods: {
+		handleDrag(ci, sci, ssci, i, e) {
+			e.stopPropagation();
+			dragged = {
+				target: {ci, sci, ssci, i},
+				from: 'category'
+			}
+		},
+		handleDrop(ci, sci, ssci, e) {
+			e.stopPropagation();
+			dropped = {
+				target: {ci, sci, ssci},
+				to: 'category'
+			};
+			this.$emit('drop');
+		}
+	}
+});
+
+var dragged = null;
+var dropped = null;
+
+var app = new Vue({
+	el: '#app',
+	data() {
+		return {
+			tosorts: null,
+			clickedTosort: null,
+			categories: null
+		}
+	},
+	computed: {
+		iframeUrl() {
+			return this.clickedTosort && this.clickedTosort.url;
+		}
+	},
+	created() {
+		this.tosorts = DATA.splice(DATA.length - 1, 1)[0].list.sort((a,b) => a.text < b.text ? -1 : 1);
+		this.categories = DATA;
+	},
+	methods: {
+		handleClick(tosort) {
+			this.clickedTosort = tosort;
+		},
+		handleDelete(i) {
+			this.tosorts.splice(i, 1);
+		},
+		handleLeftdrop() {
+			dropped = {
+				to: 'tosort'
+			}
+			this.handleDrop();
+		},
+		handleDrop() {
+			if (!dragged || !dropped) return;
+
+			if (dragged.from === 'tosort' && dropped.to === 'category') {
+				let tosortsIndex = this.tosorts.findIndex(e => e.text === dragged.target.text);
+				let tosort = this.tosorts.splice(tosortsIndex, 1);
+
+				let ci = dropped.target.ci;
+				let sci = dropped.target.sci;
+				let ssci = dropped.target.ssci;
+				if (ssci !== null) {
+					this.categories[ci].scategories[sci].sscategories[ssci].list.push(...tosort);
+				} else if (sci !== null) {
+					this.categories[ci].scategories[sci].list.push(...tosort);
+				} else if (ci !== null) {
+					this.categories[ci].list.push(...tosort);
+				}
+			} else if (dragged.from === 'category' && dropped.to === 'category') {
+				let fci = dragged.target.ci;
+				let fsci = dragged.target.sci;
+				let fssci = dragged.target.ssci;
+				let i = dragged.target.i;
+				let tci = dropped.target.ci;
+				let tsci = dropped.target.sci;
+				let tssci = dropped.target.ssci;
+
+				if (fssci !== null) {
+					var from = this.categories[fci].scategories[fsci].sscategories[fssci].list
+				} else if (fsci !== null) {
+					var from = this.categories[fci].scategories[fsci].list
+				} else if (fci !== null) {
+					var from = this.categories[fci].list
+				}
+
+				if (tssci !== null) {
+					var to = this.categories[tci].scategories[tsci].sscategories[tssci].list
+				} else if (tsci !== null) {
+					var to = this.categories[tci].scategories[tsci].list
+				} else if (tci !== null) {
+					var to = this.categories[tci].list
+				}
+
+				to.push(...from.splice(i, 1));
+			} else if (dragged.from === 'category' && dropped.to === 'tosort') {
+				let ci = dragged.target.ci;
+				let sci = dragged.target.sci;
+				let ssci = dragged.target.ssci;
+				let i = dragged.target.i;
+				
+				if (ssci !== null) {
+					this.tosorts.push(...this.categories[ci].scategories[sci].sscategories[ssci].list.splice(i, 1));
+				} else if (sci !== null) {
+					this.tosorts.push(...this.categories[ci].scategories[sci].list.splice(i, 1));
+				} else if (ci !== null) {
+					this.tosorts.push(...this.categories[ci].list.splice(i, 1));
+				}
+			}
+
+			this.dragged = null;
+			this.dropped = null;
+		},
+		generate() {
+			let text = '';
+			this.categories.forEach(category => {
+				text += `## ${category.name}\n\n`;
+				category.list.forEach(item => text += `* [${item.text}](${item.url})\n`);
+				text += '\n';
+				if (category.scategories) {
+					category.scategories.forEach(scategory => {
+						text += `### ${scategory.name}\n\n`;
+						scategory.list.forEach(item => text += `* [${item.text}](${item.url})\n`);
+						text += '\n';
+						if (scategory.sscategories) {
+							scategory.sscategories.forEach(sscategory => {
+								text += `#### ${sscategory.name}\n\n`;
+								sscategory.list.forEach(item => text += `* [${item.text}](${item.url})\n`);
+								text += '\n';
+							})
+						}
+					})
+				}
+			});
+
+			if (this.tosorts.length) {
+				text += '## A trier\n\n'
+				this.tosorts.forEach(item => text += `* [${item.text}](${item.url})\n`)
+			}
+
+			var element = document.createElement('a');
+			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+			element.setAttribute('download', 'liens.md');
+			element.click();
+
+		}
+	}
+})
+
+</script>
+</html>
